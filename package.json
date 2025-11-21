@@ -1,0 +1,58 @@
+{
+  "name": "@ticatec/dyna-js",
+  "version": "0.0.1",
+  "description": "A TypeScript library for dynamic code execution using new Function() that works in both Node.js and browser environments",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README_CN.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "clean": "rm -rf dist dist-esm",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsc -w",
+    "publish:public": "npm run build && npm publish --access public"
+  },
+  "keywords": [
+    "dynamic",
+    "script",
+    "loader",
+    "function",
+    "typescript",
+    "browser",
+    "nodejs",
+    "universal"
+  ],
+  "author": "Ticatec Auckland",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ticatec-auckland/common-web-library.git",
+    "directory": "dynamic-script-loader"
+  },
+  "bugs": {
+    "url": "https://github.com/ticatec-auckland/common-web-library/issues"
+  },
+  "homepage": "https://github.com/ticatec-auckland/common-web-library/tree/main/dynamic-script-loader#readme",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
