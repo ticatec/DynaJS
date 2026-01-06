@@ -17,8 +17,6 @@ export default class DynaJs {
       allowedGlobals: config.allowedGlobals ?? [],
       blockedGlobals: config.blockedGlobals ?? [],
       defaultImports: config.defaultImports ?? {},
-      defaultInjectedKeys: config.defaultInjectedKeys ?? [],
-      useProxyByDefault: config.useProxyByDefault ?? true,
       allowTimers: config.allowTimers ?? false,
       allowDynamicImports: config.allowDynamicImports ?? false,
       validateCode: config.validateCode ?? true,
@@ -173,68 +171,6 @@ export default class DynaJs {
       ...options,
       imports: { ...this.config.defaultImports, ...imports }
     });
-  }
-
-  createFormClass<T = any>(
-    code: string,
-    context: ExecutionContext = {},
-    injectedKeys: string[] = []
-  ): T {
-    const useProxy = this.config.useProxyByDefault;
-    const mergedContext = { ...context, ...this.config.defaultImports };
-    const mergedKeys = [...this.config.defaultInjectedKeys, ...injectedKeys];
-    
-    if (useProxy) {
-      return this.executeWithProxy<T>(code, mergedContext, mergedKeys);
-    } else {
-      return this.executeSync<T>(code, {
-        context: mergedContext,
-        imports: this.config.defaultImports
-      }).result;
-    }
-  }
-
-  private executeWithProxy<T>(
-    code: string, 
-    context: ExecutionContext, 
-    injectedKeys: string[]
-  ): T {
-    const injected: ExecutionContext = {};
-    
-    for (const key of injectedKeys) {
-      if (context.window && key in context.window) {
-        injected[key] = context.window[key];
-      } else if (key in context) {
-        injected[key] = context[key];
-      }
-    }
-
-    const sandboxContext = { ...context, ...injected };
-
-    const sandbox = new Proxy(sandboxContext, {
-      has(target, key) {
-        if (key in target) return true;
-        if (context.window && key in context.window) return true;
-        return false;
-      },
-      get(target, key: string | symbol) {
-        if (key in target) return target[key as keyof typeof target];
-        if (context.window && key in context.window) return (context.window as any)[key];
-        console.warn(`DynaJs: ${String(key)} not found`);
-        return undefined;
-      }
-    });
-
-    const wrappedCode = `
-      with (sandbox) {
-        ${Object.keys(sandbox).map(k => `const ${k} = sandbox.${k};`).join('\n')}
-        
-        ${code}
-      }
-    `;
-
-    const fn = new Function('sandbox', wrappedCode);
-    return fn(sandbox);
   }
 
   static instance: DynaJs | null = null;

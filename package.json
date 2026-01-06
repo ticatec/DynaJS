@@ -1,6 +1,6 @@
 {
   "name": "@ticatec/dyna-js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A TypeScript library for dynamic code execution using new Function() that works in both Node.js and browser environments",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

@@ -11,14 +11,12 @@
 
 ## 功能特性
 
-✅ **通用兼容性** - 同时支持 Node.js 和浏览器环境  
-✅ **TypeScript 支持** - 完整的类型安全和类型定义  
-✅ **单例模式** - 一次初始化，全局使用  
-✅ **模块导入** - 为动态代码预定义类和函数  
-✅ **基于代理的沙盒** - 使用代理机制的安全变量访问控制  
-✅ **可配置安全性** - 对允许的 API 和操作进行细粒度控制  
-✅ **表单类创建** - 专门用于创建动态表单类的方法  
-✅ **多种构建格式** - 支持 CommonJS 和 ESM  
+✅ **通用兼容性** - 同时支持 Node.js 和浏览器环境
+✅ **TypeScript 支持** - 完整的类型安全和类型定义
+✅ **单例模式** - 一次初始化，全局使用
+✅ **模块导入** - 为动态代码预定义类和函数
+✅ **可配置安全性** - 对允许的 API 和操作进行细粒度控制
+✅ **多种构建格式** - 支持 CommonJS 和 ESM
 ✅ **性能监控** - 内置执行时间跟踪  
 
 ## 安装
@@ -44,8 +42,6 @@ initializeDynaJs({
     FlexiContext: FlexiContextClass,
     ModuleLoader: ModuleLoaderClass
   },
-  defaultInjectedKeys: ['Dialog', 'MessageBox', 'Indicator', 'Toast'],
-  useProxyByDefault: true,
   allowBrowserAPIs: false, // 默认安全
   validateCode: true
 });
@@ -60,17 +56,17 @@ import { getDynaJs } from '@ticatec/dyna-js';
 const loader = getDynaJs();
 
 // 创建表单类
-const MyFormClass = loader.createFormClass(`
+const MyFormClass = loader.executeSync(`
   class CustomForm extends FlexiForm {
     constructor() {
       super();
-      this.dialog = Dialog; // 自动注入
+      this.dialog = Dialog;
     }
-    
+
     show() {
-      MessageBox.info('表单已就绪！'); // 自动注入
+      MessageBox.info('表单已就绪！');
     }
-    
+
     render() {
       return new FlexiCard({
         title: '动态表单',
@@ -79,7 +75,7 @@ const MyFormClass = loader.createFormClass(`
     }
   }
   return CustomForm;
-`);
+`).result;
 
 // 实例化并使用
 const form = new MyFormClass();
@@ -89,30 +85,6 @@ form.show();
 ## API 参考
 
 ### 核心方法
-
-#### `createFormClass<T>(code: string, context?: object, injectedKeys?: string[]): T`
-
-使用基于代理的沙盒执行创建表单类。
-
-```typescript
-const FormClass = loader.createFormClass(`
-  class MyForm extends FlexiForm {
-    constructor() {
-      super();
-      this.setupDialog();
-    }
-    
-    setupDialog() {
-      this.dialog = new Dialog({
-        title: '动态对话框'
-      });
-    }
-  }
-  return MyForm;
-`, {
-  customData: '附加上下文'
-}, ['extraKey']);
-```
 
 #### `executeSync<T>(code: string, options?: ExecutionOptions): ExecutionResult<T>`
 
@@ -169,8 +141,6 @@ interface DynaJsConfig {
   allowedGlobals?: string[];         // 允许的全局变量白名单
   blockedGlobals?: string[];         // 阻止的变量黑名单
   defaultImports?: object;           // 预导入的类/函数
-  defaultInjectedKeys?: string[];    // 自动注入的变量名
-  useProxyByDefault?: boolean;       // 默认：true
   allowTimers?: boolean;             // 允许 setTimeout/setInterval（默认：false）
   allowDynamicImports?: boolean;     // 允许 import()/require()（默认：false）
   validateCode?: boolean;            // 启用代码验证（默认：true）
@@ -229,8 +199,7 @@ initializeDynaJs({
   },
   allowBrowserAPIs: false,     // 仍然安全
   allowTimers: false,          // 表单不需要定时器
-  validateCode: true,          // 保持验证
-  defaultInjectedKeys: ['window'] // 只注入 window 引用
+  validateCode: true           // 保持验证
 });
 ```
 
@@ -239,14 +208,14 @@ initializeDynaJs({
 ### 创建动态表单组件
 
 ```typescript
-const DynamicFormBuilder = loader.createFormClass(`
+const DynamicFormBuilder = loader.executeSync(`
   class FormBuilder extends FlexiForm {
     constructor(config) {
       super();
       this.config = config;
       this.components = [];
     }
-    
+
     addField(fieldConfig) {
       const field = new FlexiCard({
         title: fieldConfig.label,
@@ -255,7 +224,7 @@ const DynamicFormBuilder = loader.createFormClass(`
       this.components.push(field);
       return this;
     }
-    
+
     createInput(type) {
       switch(type) {
         case 'text':
@@ -266,11 +235,11 @@ const DynamicFormBuilder = loader.createFormClass(`
           return '<input type="text" />';
       }
     }
-    
+
     build() {
       return this.components;
     }
-    
+
     show() {
       const dialog = new Dialog({
         title: this.config.title,
@@ -278,14 +247,14 @@ const DynamicFormBuilder = loader.createFormClass(`
       });
       dialog.show();
     }
-    
+
     render() {
       return this.components.map(c => c.render()).join('');
     }
   }
-  
+
   return FormBuilder;
-`);
+`).result;
 
 // 使用动态创建的表单构建器
 const formBuilder = new DynamicFormBuilder({
@@ -395,9 +364,9 @@ MIT 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
 ### 动态表单创建
 ```typescript
 // 适合创建各种动态表单组件
-const ContactForm = loader.createFormClass(`...`);
-const SurveyForm = loader.createFormClass(`...`);
-const RegistrationForm = loader.createFormClass(`...`);
+const ContactForm = loader.executeSync(`...`).result;
+const SurveyForm = loader.executeSync(`...`).result;
+const RegistrationForm = loader.executeSync(`...`).result;
 ```
 
 ### 业务规则执行
@@ -408,13 +377,13 @@ const businessRule = loader.executeSync(`
     // 复杂的业务逻辑
     return processBusinessRule(data);
   };
-`);
+`).result;
 ```
 
 ### 模板渲染
 ```typescript
 // 动态模板处理
-const templateEngine = loader.createFormClass(`
+const templateEngine = loader.executeSync(`
   class TemplateEngine {
     render(template, data) {
       // 模板渲染逻辑
@@ -422,5 +391,5 @@ const templateEngine = loader.createFormClass(`
     }
   }
   return TemplateEngine;
-`);
+`).result;
 ```

@@ -11,14 +11,12 @@ A TypeScript library for safe dynamic code execution using `new Function()` that
 
 ## Features
 
-✅ **Universal Compatibility** - Works in both Node.js and browser environments  
-✅ **TypeScript Support** - Full type safety with comprehensive type definitions  
-✅ **Singleton Pattern** - Initialize once, use anywhere  
-✅ **Module Imports** - Pre-define classes and functions for dynamic code  
-✅ **Proxy-based Sandbox** - Safe variable access control with proxy mechanism  
-✅ **Configurable Security** - Fine-grained control over allowed APIs and operations  
-✅ **Form Class Creation** - Special method for creating dynamic form classes  
-✅ **Multiple Build Formats** - CommonJS and ESM support  
+✅ **Universal Compatibility** - Works in both Node.js and browser environments
+✅ **TypeScript Support** - Full type safety with comprehensive type definitions
+✅ **Singleton Pattern** - Initialize once, use anywhere
+✅ **Module Imports** - Pre-define classes and functions for dynamic code
+✅ **Configurable Security** - Fine-grained control over allowed APIs and operations
+✅ **Multiple Build Formats** - CommonJS and ESM support
 ✅ **Performance Monitoring** - Built-in execution time tracking  
 
 ## Installation
@@ -44,8 +42,6 @@ initializeDynaJs({
     FlexiContext: FlexiContextClass,
     ModuleLoader: ModuleLoaderClass
   },
-  defaultInjectedKeys: ['Dialog', 'MessageBox', 'Indicator', 'Toast'],
-  useProxyByDefault: true,
   allowBrowserAPIs: false, // Secure by default
   validateCode: true
 });
@@ -59,18 +55,18 @@ import { getDynaJs } from '@ticatec/dyna-js';
 // Get the initialized loader
 const loader = getDynaJs();
 
-// Create form classes 
-const MyFormClass = loader.createFormClass(`
+// Create form classes
+const MyFormClass = loader.executeSync(`
   class CustomForm extends FlexiForm {
     constructor() {
       super();
-      this.dialog = Dialog; // Auto-injected
+      this.dialog = Dialog;
     }
-    
+
     show() {
-      MessageBox.info('Form is ready!'); // Auto-injected
+      MessageBox.info('Form is ready!');
     }
-    
+
     render() {
       return new FlexiCard({
         title: 'Dynamic Form',
@@ -79,7 +75,7 @@ const MyFormClass = loader.createFormClass(`
     }
   }
   return CustomForm;
-`);
+`).result;
 
 // Instantiate and use
 const form = new MyFormClass();
@@ -89,30 +85,6 @@ form.show();
 ## API Reference
 
 ### Core Methods
-
-#### `createFormClass<T>(code: string, context?: object, injectedKeys?: string[]): T`
-
-Creates a form class with proxy-based sandbox execution.
-
-```typescript
-const FormClass = loader.createFormClass(`
-  class MyForm extends FlexiForm {
-    constructor() {
-      super();
-      this.setupDialog();
-    }
-    
-    setupDialog() {
-      this.dialog = new Dialog({
-        title: 'Dynamic Dialog'
-      });
-    }
-  }
-  return MyForm;
-`, {
-  customData: 'additional context'
-}, ['extraKey']);
-```
 
 #### `executeSync<T>(code: string, options?: ExecutionOptions): ExecutionResult<T>`
 
@@ -169,8 +141,6 @@ interface DynaJsConfig {
   allowedGlobals?: string[];         // Whitelist of allowed global variables
   blockedGlobals?: string[];         // Blacklist of blocked variables
   defaultImports?: object;           // Pre-imported classes/functions
-  defaultInjectedKeys?: string[];    // Auto-injected variable names
-  useProxyByDefault?: boolean;       // Default: true
   allowTimers?: boolean;             // Allow setTimeout/setInterval (Default: false)
   allowDynamicImports?: boolean;     // Allow import()/require() (Default: false)
   validateCode?: boolean;            // Enable code validation (Default: true)
@@ -229,8 +199,7 @@ initializeDynaJs({
   },
   allowBrowserAPIs: false,     // Still secure
   allowTimers: false,          // No timers needed for forms
-  validateCode: true,          // Keep validation
-  defaultInjectedKeys: ['window'] // Only inject window reference
+  validateCode: true           // Keep validation
 });
 ```
 
@@ -239,14 +208,14 @@ initializeDynaJs({
 ### Creating Dynamic Form Components
 
 ```typescript
-const DynamicFormBuilder = loader.createFormClass(`
+const DynamicFormBuilder = loader.executeSync(`
   class FormBuilder extends FlexiForm {
     constructor(config) {
       super();
       this.config = config;
       this.components = [];
     }
-    
+
     addField(fieldConfig) {
       const field = new FlexiCard({
         title: fieldConfig.label,
@@ -255,7 +224,7 @@ const DynamicFormBuilder = loader.createFormClass(`
       this.components.push(field);
       return this;
     }
-    
+
     createInput(type) {
       switch(type) {
         case 'text':
@@ -266,11 +235,11 @@ const DynamicFormBuilder = loader.createFormClass(`
           return '<input type="text" />';
       }
     }
-    
+
     build() {
       return this.components;
     }
-    
+
     show() {
       const dialog = new Dialog({
         title: this.config.title,
@@ -278,14 +247,14 @@ const DynamicFormBuilder = loader.createFormClass(`
       });
       dialog.show();
     }
-    
+
     render() {
       return this.components.map(c => c.render()).join('');
     }
   }
-  
+
   return FormBuilder;
-`);
+`).result;
 
 // Use the dynamically created form builder
 const formBuilder = new DynamicFormBuilder({

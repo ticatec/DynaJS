@@ -26,8 +26,6 @@ export interface DynaJsConfig {
   allowedGlobals?: string[];
   blockedGlobals?: string[];
   defaultImports?: ModuleImports;
-  defaultInjectedKeys?: string[];
-  useProxyByDefault?: boolean;
   allowTimers?: boolean;
   allowDynamicImports?: boolean;
   validateCode?: boolean;
