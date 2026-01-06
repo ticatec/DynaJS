@@ -75,7 +75,7 @@ const MyFormClass = loader.executeSync(`
     }
   }
   return CustomForm;
-`).result;
+`);
 
 // Instantiate and use
 const form = new MyFormClass();
@@ -86,27 +86,27 @@ form.show();
 
 ### Core Methods
 
-#### `executeSync<T>(code: string, options?: ExecutionOptions): ExecutionResult<T>`
+#### `executeSync<T>(code: string, options?: ExecutionOptions): T`
 
-Synchronously execute code with result and timing information.
+Synchronously execute code and return the result directly.
 
 ```typescript
-const result = loader.executeSync(`
+const form = loader.executeSync(`
   const form = new FlexiForm();
   form.setTitle('Dynamic Form');
   return form;
 `);
 
-console.log(result.result); // FlexiForm instance
-console.log(result.executionTime); // Execution time in milliseconds
+console.log(form); // FlexiForm instance
+// Execution time is logged to console automatically
 ```
 
-#### `execute<T>(code: string, options?: ExecutionOptions): Promise<ExecutionResult<T>>`
+#### `execute<T>(code: string, options?: ExecutionOptions): Promise<T>`
 
 Asynchronously execute code with timeout support.
 
 ```typescript
-const result = await loader.execute(`
+const form = await loader.execute(`
   return new Promise(resolve => {
     const form = new FlexiForm();
     resolve(form);
@@ -115,14 +115,16 @@ const result = await loader.execute(`
   timeout: 3000,
   context: { customVar: 'value' }
 });
+
+console.log(form); // FlexiForm instance
 ```
 
-#### `executeWithImports<T>(code: string, imports: object, options?: ExecutionOptions): ExecutionResult<T>`
+#### `executeWithImports<T>(code: string, imports: object, options?: ExecutionOptions): T`
 
 Execute code with additional temporary imports.
 
 ```typescript
-const result = loader.executeWithImports(`
+const component = loader.executeWithImports(`
   return new CustomComponent({
     message: 'Hello from dynamic code!'
   });
@@ -254,7 +256,7 @@ const DynamicFormBuilder = loader.executeSync(`
   }
 
   return FormBuilder;
-`).result;
+`);
 
 // Use the dynamically created form builder
 const formBuilder = new DynamicFormBuilder({
@@ -306,7 +308,7 @@ try {
   `);
 } catch (error) {
   console.error('Execution failed:', error.message);
-  // Error includes execution time and detailed error information
+  // Error message includes execution time and detailed error information
 }
 ```
 

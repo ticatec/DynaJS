@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/@ticatec%2Fdyna-js.svg)](https://badge.fury.io/js/@ticatec%2Fdyna-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org())
 [![Node.js](https://img.shields.io/badge/Node.js-14%2B-green.svg)](https://nodejs.org/)
 
 [English Documentation](README.md)
@@ -17,7 +17,7 @@
 ✅ **模块导入** - 为动态代码预定义类和函数
 ✅ **可配置安全性** - 对允许的 API 和操作进行细粒度控制
 ✅ **多种构建格式** - 支持 CommonJS 和 ESM
-✅ **性能监控** - 内置执行时间跟踪  
+✅ **性能监控** - 内置执行时间跟踪
 
 ## 安装
 
@@ -75,7 +75,7 @@ const MyFormClass = loader.executeSync(`
     }
   }
   return CustomForm;
-`).result;
+`);
 
 // 实例化并使用
 const form = new MyFormClass();
@@ -86,27 +86,27 @@ form.show();
 
 ### 核心方法
 
-#### `executeSync<T>(code: string, options?: ExecutionOptions): ExecutionResult<T>`
+#### `executeSync<T>(code: string, options?: ExecutionOptions): T`
 
-同步执行代码并返回结果和计时信息。
+同步执行代码并直接返回结果。
 
 ```typescript
-const result = loader.executeSync(`
+const form = loader.executeSync(`
   const form = new FlexiForm();
   form.setTitle('动态表单');
   return form;
 `);
 
-console.log(result.result); // FlexiForm 实例
-console.log(result.executionTime); // 执行时间（毫秒）
+console.log(form); // FlexiForm 实例
+// 执行时间会自动记录到控制台
 ```
 
-#### `execute<T>(code: string, options?: ExecutionOptions): Promise<ExecutionResult<T>>`
+#### `execute<T>(code: string, options?: ExecutionOptions): Promise<T>`
 
 异步执行代码，支持超时控制。
 
 ```typescript
-const result = await loader.execute(`
+const form = await loader.execute(`
   return new Promise(resolve => {
     const form = new FlexiForm();
     resolve(form);
@@ -115,14 +115,16 @@ const result = await loader.execute(`
   timeout: 3000,
   context: { customVar: 'value' }
 });
+
+console.log(form); // FlexiForm 实例
 ```
 
-#### `executeWithImports<T>(code: string, imports: object, options?: ExecutionOptions): ExecutionResult<T>`
+#### `executeWithImports<T>(code: string, imports: object, options?: ExecutionOptions): T`
 
 使用额外的临时导入执行代码。
 
 ```typescript
-const result = loader.executeWithImports(`
+const component = loader.executeWithImports(`
   return new CustomComponent({
     message: '来自动态代码的问候！'
   });
@@ -254,7 +256,7 @@ const DynamicFormBuilder = loader.executeSync(`
   }
 
   return FormBuilder;
-`).result;
+`);
 
 // 使用动态创建的表单构建器
 const formBuilder = new DynamicFormBuilder({
@@ -273,15 +275,15 @@ formBuilder
 const dynamicValidator = loader.createFunction(`
   return function validateForm(formData) {
     const errors = [];
-    
+
     if (!formData.name) {
       errors.push('姓名是必填项');
     }
-    
+
     if (!formData.email || !formData.email.includes('@')) {
       errors.push('需要有效的邮箱地址');
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors: errors
@@ -306,7 +308,7 @@ try {
   `);
 } catch (error) {
   console.error('执行失败：', error.message);
-  // 错误包含执行时间和详细的错误信息
+  // 错误信息包含执行时间和详细的错误信息
 }
 ```
 
@@ -323,11 +325,11 @@ try {
 具有完整类型定义的 TypeScript 支持：
 
 ```typescript
-import { 
+import {
   DynaJs,
   ExecutionResult,
   ExecutionOptions,
-  ModuleImports 
+  ModuleImports
 } from '@ticatec/dyna-js';
 ```
 
@@ -364,9 +366,9 @@ MIT 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
 ### 动态表单创建
 ```typescript
 // 适合创建各种动态表单组件
-const ContactForm = loader.executeSync(`...`).result;
-const SurveyForm = loader.executeSync(`...`).result;
-const RegistrationForm = loader.executeSync(`...`).result;
+const ContactForm = loader.executeSync(`...`);
+const SurveyForm = loader.executeSync(`...`);
+const RegistrationForm = loader.executeSync(`...`);
 ```
 
 ### 业务规则执行
@@ -377,7 +379,7 @@ const businessRule = loader.executeSync(`
     // 复杂的业务逻辑
     return processBusinessRule(data);
   };
-`).result;
+`);
 ```
 
 ### 模板渲染
@@ -391,5 +393,5 @@ const templateEngine = loader.executeSync(`
     }
   }
   return TemplateEngine;
-`).result;
+`);
 ```

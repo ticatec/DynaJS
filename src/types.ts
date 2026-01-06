@@ -11,13 +11,6 @@ export interface ExecutionOptions {
   timeout?: number;
   strict?: boolean;
   imports?: ModuleImports;
-  injectedKeys?: string[];
-  useProxy?: boolean;
-}
-
-export interface ExecutionResult<T = any> {
-  result: T;
-  executionTime: number;
 }
 
 export interface DynaJsConfig {
