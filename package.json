@@ -1,6 +1,6 @@
 {
   "name": "@ticatec/dyna-js",
-  "version": "0.0.4",
+  "version": "0.1.4",
   "description": "A TypeScript library for dynamic code execution using new Function() that works in both Node.js and browser environments",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -41,8 +41,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ticatec/DynaJS.git",
-    "directory": "dynamic-script-loader"
+    "url": "git+https://github.com/ticatec/DynaJS.git"
   },
   "bugs": {
     "url": "https://github.com/ticatec/DynaJS/issues"

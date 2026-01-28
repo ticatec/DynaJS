@@ -11,13 +11,13 @@
 
 ## 功能特性
 
-✅ **通用兼容性** - 同时支持 Node.js 和浏览器环境
-✅ **TypeScript 支持** - 完整的类型安全和类型定义
-✅ **单例模式** - 一次初始化，全局使用
-✅ **模块导入** - 为动态代码预定义类和函数
-✅ **可配置安全性** - 对允许的 API 和操作进行细粒度控制
-✅ **多种构建格式** - 支持 CommonJS 和 ESM
-✅ **性能监控** - 内置执行时间跟踪
+✅ **通用兼容性** - 同时支持 Node.js 和浏览器环境  
+✅ **TypeScript 支持** - 完整的类型安全和类型定义  
+✅ **单例模式** - 一次初始化，全局使用  
+✅ **模块导入** - 为动态代码预定义类和函数  
+✅ **可配置安全性** - 对允许的 API 和操作进行细粒度控制  
+✅ **多种构建格式** - 支持 CommonJS 和 ESM  
+✅ **性能监控** - 内置执行时间跟踪  
 
 ## 安装
 
@@ -298,6 +298,206 @@ const validation = dynamicValidator({
 });
 ```
 
+## ModuleLoader - 动态模块管理
+
+`ModuleLoader` 是一个单例类，用于管理具有自动缓存和版本控制的动态 JavaScript 模块。它非常适合加载远程代码模块并管理它们的生命周期。
+
+### 核心特性
+
+- **单例模式** - 单个实例管理所有模块
+- **版本控制** - 基于摘要的自动新鲜度检查
+- **本地缓存** - 将模块存储在 localStorage 中以供离线访问
+- **懒加载** - 模块仅在需要时才实例化
+- **自定义钩子** - 使用自定义实现覆盖默认行为
+
+### 基础用法
+
+#### 1. 初始化 ModuleLoader
+
+```typescript
+import { ModuleLoader } from '@ticatec/dyna-js';
+
+// 定义如何从服务器加载模块
+const loadModuleFromServer = async (moduleInfo) => {
+  const response = await fetch(`/api/modules/${moduleInfo.code}`);
+  return response.json(); // 应该返回 { code, digest, scriptText }
+};
+
+// 初始化单例
+const moduleLoader = ModuleLoader.initialize(loadModuleFromServer, {
+  // 所有选项都是可选的 - 默认使用 localStorage
+});
+```
+
+#### 2. 检查和更新模块
+
+```typescript
+// 检查模块列表并在需要时更新
+await moduleLoader.checkFreshScripts([
+  { code: 'user-form', digest: 'abc123...' },
+  { code: 'data-grid', digest: 'def456...' },
+  { code: 'chart-widget', digest: 'ghi789...' }
+]);
+
+// 这将：
+// 1. 检查每个模块的摘要与 localStorage 中的对比
+// 2. 下载并保存已更改的模块
+// 3. 清除模块实例缓存
+```
+
+#### 3. 创建和使用模块
+
+```typescript
+// 导入模块需要的依赖项
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+// 创建模块实例
+const UserForm = moduleLoader.createModule('user-form', {
+  React,
+  ReactDOM,
+  // 添加模块需要的任何其他依赖项
+});
+
+// 使用模块（它现在已被缓存以供后续调用）
+const formInstance = new UserForm({
+  title: '用户注册',
+  onSubmit: handleSubmit
+});
+```
+
+### 高级配置
+
+#### 自定义模块检查函数
+
+```typescript
+const moduleLoader = ModuleLoader.initialize(loadModuleFromServer, {
+  // 自定义逻辑来检查模块是否需要更新
+  moduleCheck: (moduleInfo) => {
+    const localVersion = localStorage.getItem(`version:${moduleInfo.code}`);
+    return localVersion === moduleInfo.version;
+  }
+});
+```
+
+#### 自定义存储实现
+
+```typescript
+// 使用您自己的存储解决方案（IndexedDB、自定义缓存等）
+const moduleLoader = ModuleLoader.initialize(loadModuleFromServer, {
+  // 自定义保存函数
+  saveModule: (moduleData) => {
+    myCustomCache.set(moduleData.code, {
+      digest: moduleData.digest,
+      script: moduleData.scriptText,
+      timestamp: Date.now()
+    });
+  },
+
+  // 自定义加载函数
+  loadLocalModule: (moduleCode) => {
+    const cached = myCustomCache.get(moduleCode);
+    return cached ? cached.script : null;
+  }
+});
+```
+
+### 完整示例
+
+```typescript
+import { ModuleLoader, initializeDynaJs } from '@ticatec/dyna-js';
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+// 1. 使用基础导入初始化 DynaJs
+initializeDynaJs({
+  defaultImports: {
+    Dialog: DialogClass,
+    MessageBox: MessageBoxClass
+  }
+});
+
+// 2. 设置模块加载器
+const loadModule = async (moduleInfo) => {
+  const response = await fetch(`/api/modules/${moduleInfo.code}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ digest: moduleInfo.digest })
+  });
+
+  if (!response.ok) throw new Error('加载模块失败');
+  return response.json();
+};
+
+const moduleLoader = ModuleLoader.initialize(loadModule, {});
+
+// 3. 在应用启动时，检查模块更新
+async function initializeApp() {
+  try {
+    // 从服务器获取模块清单
+    const manifest = await fetch('/api/modules/manifest').then(r => r.json());
+
+    // 更新所有已更改的模块
+    await moduleLoader.checkFreshScripts(manifest.modules);
+
+    console.log('所有模块都是最新的！');
+  } catch (error) {
+    console.error('更新模块失败：', error);
+  }
+}
+
+// 4. 按需加载和使用模块
+function loadUserForm() {
+  // 这将使用 localStorage 中的缓存版本
+  const UserForm = moduleLoader.createModule('user-form', {
+    React,
+    ReactDOM,
+    Dialog: DialogClass,
+    MessageBox: MessageBoxClass
+  });
+
+  // 后续调用返回相同的缓存实例
+  const form = new UserForm();
+  form.render();
+}
+
+// 初始化
+initializeApp().then(() => {
+  loadUserForm();
+});
+```
+
+### 模块数据格式
+
+您的服务器应以此格式返回模块数据：
+
+```typescript
+interface ModuleData {
+  code: string;        // 唯一的模块标识符
+  digest: string;      // 哈希/版本标识符（例如 MD5、SHA-256）
+  scriptText: string;  // 要执行的实际 JavaScript 代码
+}
+```
+
+### 最佳实践
+
+1. **版本控制**：对 digest 字段使用基于内容的哈希（MD5、SHA-256）
+2. **优雅降级**：处理加载模块时的网络故障
+3. **依赖注入**：在 imports 对象中传递所有必需的依赖项
+4. **缓存失效**：在应用启动时和定期调用 `checkFreshScripts()`
+5. **错误处理**：将模块创建包装在 try-catch 块中
+
+```typescript
+try {
+  const module = moduleLoader.createModule('my-module', imports);
+  const instance = new module();
+  instance.run();
+} catch (error) {
+  console.error('模块加载或执行失败：', error);
+  // 回退到默认行为
+}
+```
+
 ## 错误处理
 
 ```typescript
@@ -327,7 +527,6 @@ try {
 ```typescript
 import {
   DynaJs,
-  ExecutionResult,
   ExecutionOptions,
   ModuleImports
 } from '@ticatec/dyna-js';

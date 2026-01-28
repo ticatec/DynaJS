@@ -11,13 +11,13 @@ A TypeScript library for safe dynamic code execution using `new Function()` that
 
 ## Features
 
-✅ **Universal Compatibility** - Works in both Node.js and browser environments
-✅ **TypeScript Support** - Full type safety with comprehensive type definitions
-✅ **Singleton Pattern** - Initialize once, use anywhere
-✅ **Module Imports** - Pre-define classes and functions for dynamic code
-✅ **Configurable Security** - Fine-grained control over allowed APIs and operations
-✅ **Multiple Build Formats** - CommonJS and ESM support
-✅ **Performance Monitoring** - Built-in execution time tracking  
+✅ **Universal Compatibility** - Works in both Node.js and browser environments  
+✅ **TypeScript Support** - Full type safety with comprehensive type definitions  
+✅ **Singleton Pattern** - Initialize once, use anywhere  
+✅ **Module Imports** - Pre-define classes and functions for dynamic code  
+✅ **Configurable Security** - Fine-grained control over allowed APIs and operations  
+✅ **Multiple Build Formats** - CommonJS and ESM support  
+✅ **Performance Monitoring** - Built-in execution time tracking    
 
 ## Installation
 
@@ -298,6 +298,206 @@ const validation = dynamicValidator({
 });
 ```
 
+## ModuleLoader - Dynamic Module Management
+
+`ModuleLoader` is a singleton class for managing dynamic JavaScript modules with automatic caching and version control. It's perfect for loading remote code modules and managing their lifecycle.
+
+### Key Features
+
+- **Singleton Pattern** - Single instance manages all modules
+- **Version Control** - Automatic digest-based freshness checking
+- **Local Caching** - Stores modules in localStorage for offline access
+- **Lazy Loading** - Modules are only instantiated when needed
+- **Custom Hooks** - Override default behaviors with custom implementations
+
+### Basic Usage
+
+#### 1. Initialize the ModuleLoader
+
+```typescript
+import { ModuleLoader } from '@ticatec/dyna-js';
+
+// Define how to load modules from your server
+const loadModuleFromServer = async (moduleInfo) => {
+  const response = await fetch(`/api/modules/${moduleInfo.code}`);
+  return response.json(); // Should return { code, digest, scriptText }
+};
+
+// Initialize the singleton
+const moduleLoader = ModuleLoader.initialize(loadModuleFromServer, {
+  // All options are optional - defaults use localStorage
+});
+```
+
+#### 2. Check and Update Modules
+
+```typescript
+// Check a list of modules and update if needed
+await moduleLoader.checkFreshScripts([
+  { code: 'user-form', digest: 'abc123...' },
+  { code: 'data-grid', digest: 'def456...' },
+  { code: 'chart-widget', digest: 'ghi789...' }
+]);
+
+// This will:
+// 1. Check each module's digest against localStorage
+// 2. Download and save modules that have changed
+// 3. Clear the module instance cache
+```
+
+#### 3. Create and Use Modules
+
+```typescript
+// Import dependencies that the module needs
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+// Create the module instance
+const UserForm = moduleLoader.createModule('user-form', {
+  React,
+  ReactDOM,
+  // Add any other dependencies your module needs
+});
+
+// Use the module (it's now cached for subsequent calls)
+const formInstance = new UserForm({
+  title: 'User Registration',
+  onSubmit: handleSubmit
+});
+```
+
+### Advanced Configuration
+
+#### Custom Module Check Function
+
+```typescript
+const moduleLoader = ModuleLoader.initialize(loadModuleFromServer, {
+  // Custom logic to check if module needs updating
+  moduleCheck: (moduleInfo) => {
+    const localVersion = localStorage.getItem(`version:${moduleInfo.code}`);
+    return localVersion === moduleInfo.version;
+  }
+});
+```
+
+#### Custom Storage Implementation
+
+```typescript
+// Use your own storage solution (IndexedDB, custom cache, etc.)
+const moduleLoader = ModuleLoader.initialize(loadModuleFromServer, {
+  // Custom save function
+  saveModule: (moduleData) => {
+    myCustomCache.set(moduleData.code, {
+      digest: moduleData.digest,
+      script: moduleData.scriptText,
+      timestamp: Date.now()
+    });
+  },
+
+  // Custom load function
+  loadLocalModule: (moduleCode) => {
+    const cached = myCustomCache.get(moduleCode);
+    return cached ? cached.script : null;
+  }
+});
+```
+
+### Complete Example
+
+```typescript
+import { ModuleLoader, initializeDynaJs } from '@ticatec/dyna-js';
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+// 1. Initialize DynaJs with your base imports
+initializeDynaJs({
+  defaultImports: {
+    Dialog: DialogClass,
+    MessageBox: MessageBoxClass
+  }
+});
+
+// 2. Setup module loader
+const loadModule = async (moduleInfo) => {
+  const response = await fetch(`/api/modules/${moduleInfo.code}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ digest: moduleInfo.digest })
+  });
+
+  if (!response.ok) throw new Error('Failed to load module');
+  return response.json();
+};
+
+const moduleLoader = ModuleLoader.initialize(loadModule, {});
+
+// 3. On application startup, check for module updates
+async function initializeApp() {
+  try {
+    // Get module manifest from server
+    const manifest = await fetch('/api/modules/manifest').then(r => r.json());
+
+    // Update all modules that have changed
+    await moduleLoader.checkFreshScripts(manifest.modules);
+
+    console.log('All modules are up to date!');
+  } catch (error) {
+    console.error('Failed to update modules:', error);
+  }
+}
+
+// 4. Load and use modules on demand
+function loadUserForm() {
+  // This will use the cached version from localStorage
+  const UserForm = moduleLoader.createModule('user-form', {
+    React,
+    ReactDOM,
+    Dialog: DialogClass,
+    MessageBox: MessageBoxClass
+  });
+
+  // Subsequent calls return the same cached instance
+  const form = new UserForm();
+  form.render();
+}
+
+// Initialize
+initializeApp().then(() => {
+  loadUserForm();
+});
+```
+
+### Module Data Format
+
+Your server should return module data in this format:
+
+```typescript
+interface ModuleData {
+  code: string;        // Unique module identifier
+  digest: string;      // Hash/version identifier (e.g., MD5, SHA-256)
+  scriptText: string;  // The actual JavaScript code to execute
+}
+```
+
+### Best Practices
+
+1. **Version Control**: Use content-based hashing (MD5, SHA-256) for the digest field
+2. **Graceful Degradation**: Handle network failures when loading modules
+3. **Dependency Injection**: Pass all required dependencies in the imports object
+4. **Cache Invalidation**: Call `checkFreshScripts()` on app startup and periodically
+5. **Error Handling**: Wrap module creation in try-catch blocks
+
+```typescript
+try {
+  const module = moduleLoader.createModule('my-module', imports);
+  const instance = new module();
+  instance.run();
+} catch (error) {
+  console.error('Module failed to load or execute:', error);
+  // Fallback to default behavior
+}
+```
+
 ## Error Handling
 
 ```typescript
@@ -327,7 +527,6 @@ Full TypeScript support with comprehensive type definitions:
 ```typescript
 import { 
   DynaJs,
-  ExecutionResult,
   ExecutionOptions,
   ModuleImports 
 } from '@ticatec/dyna-js';

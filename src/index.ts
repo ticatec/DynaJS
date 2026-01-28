@@ -1,4 +1,5 @@
 import DynaJs  from './DynaJs';
+import ModuleLoader from "./ModuleLoader";
 export * from './types';
 export * from './utils';
 
@@ -14,5 +15,5 @@ export function getDynaJs() {
   return DynaJs.getInstance();
 }
 
-export { DynaJs };
+export { DynaJs, ModuleLoader };
 export default DynaJs;
